@@ -1,277 +1,75 @@
 <!DOCTYPE html>
-<html>
+<html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<title>Hide Game - مطورة</title>
-<style>
-body{
-margin:0;
-background:#111;
-overflow:hidden;
-}
-
-canvas{
-display:block;
-background:#222;
-}
-
-#joystick{
-position:fixed;
-bottom:40px;
-left:40px;
-width:120px;
-height:120px;
-background:rgba(255,255,255,0.1);
-border-radius:50%;
-}
-
-#stick{
-position:absolute;
-width:60px;
-height:60px;
-background:rgba(255,255,255,0.4);
-border-radius:50%;
-left:30px;
-top:30px;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لعبة الثعبان والسلم</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<canvas id="game"></canvas>
+    <!-- شاشة تسجيل الدخول / إنشاء حساب -->
+    <div id="auth-screen" class="screen active">
+        <div class="auth-container">
+            <h2>مرحباً بك في اللعبة</h2>
+            <div id="auth-tabs">
+                <button class="tab-btn active" onclick="showTab('login')">تسجيل الدخول</button>
+                <button class="tab-btn" onclick="showTab('signup')">إنشاء حساب</button>
+            </div>
+            <!-- نموذج تسجيل الدخول -->
+            <div id="login-form" class="auth-form">
+                <input type="email" id="login-email" placeholder="البريد الإلكتروني" required>
+                <input type="password" id="login-password" placeholder="كلمة المرور" required>
+                <button onclick="login()">دخول</button>
+                <p id="login-error" class="error"></p>
+            </div>
+            <!-- نموذج إنشاء حساب -->
+            <div id="signup-form" class="auth-form" style="display: none;">
+                <input type="text" id="signup-username" placeholder="اسم المستخدم" required>
+                <input type="email" id="signup-email" placeholder="البريد الإلكتروني" required>
+                <input type="password" id="signup-password" placeholder="كلمة المرور" required>
+                <button onclick="signup()">إنشاء حساب</button>
+                <p id="signup-error" class="error"></p>
+            </div>
+        </div>
+    </div>
 
-<div id="joystick">
-<div id="stick"></div>
-</div>
+    <!-- شاشة الصفحة الرئيسية (بعد تسجيل الدخول) -->
+    <div id="main-screen" class="screen">
+        <h2>أهلاً <span id="display-name"></span>!</h2>
+        <div id="friends-list">
+            <h3>قائمة الأصدقاء</h3>
+            <ul id="friends">
+                <!-- سيتم ملؤها من Firebase -->
+            </ul>
+            <div class="add-friend">
+                <input type="email" id="friend-email" placeholder="البريد الإلكتروني للصديق">
+                <button onclick="addFriend()">إضافة</button>
+            </div>
+        </div>
+        <button class="start-btn" onclick="startGame()">بدء اللعبة</button>
+        <button class="logout-btn" onclick="logout()">تسجيل الخروج</button>
+    </div>
 
-<script>
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
+    <!-- شاشة غرفة الانتظار -->
+    <div id="waiting-screen" class="screen">
+        <h2>غرفة الانتظار</h2>
+        <div id="players-list"></div>
+        <p>الوقت المتبقي: <span id="timer">10</span> ثانية</p>
+    </div>
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+    <!-- شاشة ساحة اللعب -->
+    <div id="game-screen" class="screen">
+        <h2>ساحة اللعب</h2>
+        <div id="board"></div>
+        <div id="dice-area">
+            <button onclick="rollDice()" id="roll-btn">🎲 ارم النرد</button>
+            <span id="dice-result"></span>
+        </div>
+        <div id="players-status"></div>
+        <button onclick="leaveGame()" class="leave-btn">خروج</button>
+    </div>
 
-// اللاعب
-let player = {
-x: 200,
-y: 200,
-width: 20,   // عرض جسم الشخصية
-height: 30   // ارتفاع الجسم
-};
-
-// العدو (ثابت حالياً)
-let enemy = {
-x: 500,
-y: 300,
-size: 30
-};
-
-// الجدران (مصفوفة من المستطيلات)
-let walls = [
-    { x: 100, y: 100, width: 30, height: 200 },
-    { x: 300, y: 400, width: 200, height: 30 },
-    { x: 600, y: 150, width: 30, height: 250 },
-    { x: 400, y: 80,  width: 150, height: 30 },
-    { x: 50,  y: 500, width: 300, height: 30 }
-];
-
-// البوابة (تقع داخل جدار، لكننا نتعامل معها ككائن منفصل)
-let gate = {
-    x: 150,
-    y: 100,
-    width: 40,
-    height: 40,
-    active: true
-};
-
-// متغيرات حركة اللاعب من عصا التحكم
-let moveX = 0;
-let moveY = 0;
-
-const joystick = document.getElementById("joystick");
-const stick = document.getElementById("stick");
-
-let dragging = false;
-
-// أحداث عصا التحكم (لللمس)
-joystick.addEventListener("touchstart", () => {
-    dragging = true;
-});
-
-document.addEventListener("touchend", () => {
-    dragging = false;
-    moveX = 0;
-    moveY = 0;
-    stick.style.left = "30px";
-    stick.style.top = "30px";
-});
-
-document.addEventListener("touchmove", (e) => {
-    if (!dragging) return;
-    e.preventDefault(); // لمنع تمرير الصفحة
-
-    let rect = joystick.getBoundingClientRect();
-    let x = e.touches[0].clientX - rect.left - 60;
-    let y = e.touches[0].clientY - rect.top - 60;
-
-    let dist = Math.sqrt(x * x + y * y);
-    let max = 40;
-
-    if (dist > max) {
-        x = (x / dist) * max;
-        y = (y / dist) * max;
-    }
-
-    stick.style.left = x + 30 + "px";
-    stick.style.top = y + 30 + "px";
-
-    moveX = x / max;
-    moveY = y / max;
-});
-
-// دالة التحقق من التصادم مع الجدران
-function collidesWithWalls(newX, newY, w, h) {
-    for (let wall of walls) {
-        if (newX < wall.x + wall.width &&
-            newX + w > wall.x &&
-            newY < wall.y + wall.height &&
-            newY + h > wall.y) {
-            return true; // هناك تصادم
-        }
-    }
-    return false;
-}
-
-// دالة التحقق من لمس البوابة
-function checkGate() {
-    if (!gate.active) return false;
-    if (player.x < gate.x + gate.width &&
-        player.x + player.width > gate.x &&
-        player.y < gate.y + gate.height &&
-        player.y + player.height > gate.y) {
-        // لمس البوابة
-        gate.active = false; // يمكن إعادة تفعيلها بعد فترة أو جعلها تختفي
-        alert("اجتزت البوابة!");
-        player.x = 200;
-        player.y = 200;
-        // إعادة تفعيل البوابة بعد ثانيتين (اختياري)
-        setTimeout(() => { gate.active = true; }, 2000);
-        return true;
-    }
-    return false;
-}
-
-function update() {
-    // حساب الحركة المبدئية
-    let newX = player.x + moveX * 5;
-    let newY = player.y + moveY * 5;
-
-    // التحقق من التصادم في الاتجاه الأفقي
-    if (!collidesWithWalls(newX, player.y, player.width, player.height)) {
-        player.x = newX;
-    }
-    // التحقق من التصادم في الاتجاه الرأسي
-    if (!collidesWithWalls(player.x, newY, player.width, player.height)) {
-        player.y = newY;
-    }
-
-    // حدود الخريطة (منع الخروج من الشاشة)
-    player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
-    player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
-
-    // التحقق من البوابة
-    checkGate();
-
-    // التحقق من العدو
-    let dx = enemy.x - (player.x + player.width/2);
-    let dy = enemy.y - (player.y + player.height/2);
-    let dist = Math.sqrt(dx*dx + dy*dy);
-    if (dist < 40) {
-        alert("تم العثور عليك!");
-        player.x = 200;
-        player.y = 200;
-    }
-}
-
-// دالة رسم الشخصية
-function drawPlayer() {
-    let x = player.x;
-    let y = player.y;
-    let w = player.width;
-    let h = player.height;
-
-    // رسم الجسم (قميص)
-    ctx.fillStyle = "dodgerblue";
-    ctx.fillRect(x, y + 10, w, h - 10); // الجسم من تحت الرأس
-
-    // رسم الرأس
-    ctx.fillStyle = "peachpuff";
-    ctx.beginPath();
-    ctx.arc(x + w/2, y + 8, 10, 0, Math.PI * 2);
-    ctx.fill();
-
-    // رسم العينين
-    ctx.fillStyle = "black";
-    ctx.beginPath();
-    ctx.arc(x + w/2 - 4, y + 5, 2, 0, Math.PI*2);
-    ctx.arc(x + w/2 + 4, y + 5, 2, 0, Math.PI*2);
-    ctx.fill();
-
-    // رسم الأذرع (خطوط)
-    ctx.beginPath();
-    ctx.strokeStyle = "peachpuff";
-    ctx.lineWidth = 4;
-    // ذراع أيسر
-    ctx.moveTo(x, y + 15);
-    ctx.lineTo(x - 8, y + 25);
-    // ذراع أيمن
-    ctx.moveTo(x + w, y + 15);
-    ctx.lineTo(x + w + 8, y + 25);
-    ctx.stroke();
-
-    // رسم الأرجل (خطوط)
-    ctx.beginPath();
-    ctx.strokeStyle = "brown";
-    ctx.lineWidth = 4;
-    ctx.moveTo(x + 5, y + h - 5);
-    ctx.lineTo(x + 2, y + h + 10);
-    ctx.moveTo(x + w - 5, y + h - 5);
-    ctx.lineTo(x + w - 2, y + h + 10);
-    ctx.stroke();
-}
-
-function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // رسم الجدران
-    ctx.fillStyle = "#888";
-    for (let wall of walls) {
-        ctx.fillRect(wall.x, wall.y, wall.width, wall.height);
-    }
-
-    // رسم البوابة إذا كانت نشطة
-    if (gate.active) {
-        ctx.fillStyle = "gold";
-        ctx.fillRect(gate.x, gate.y, gate.width, gate.height);
-        ctx.fillStyle = "black";
-        ctx.font = "12px Arial";
-        ctx.fillText("بوابة", gate.x, gate.y - 5);
-    }
-
-    // رسم العدو (يظل مربعاً أحمر)
-    ctx.fillStyle = "red";
-    ctx.fillRect(enemy.x, enemy.y, enemy.size, enemy.size);
-
-    // رسم الشخصية
-    drawPlayer();
-}
-
-function loop() {
-    update();
-    draw();
-    requestAnimationFrame(loop);
-}
-
-loop();
-</script>
+    <!-- تضمين Firebase وملف البرنامج النصي -->
+    <script type="module" src="script.js"></script>
 </body>
 </html>

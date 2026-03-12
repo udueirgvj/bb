@@ -2,7 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, updateDoc, arrayUnion, arrayRemove, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-// إعداد Firebase
+// إعداد Firebase (استخدم إعدادات مشروعك الخاص)
 const firebaseConfig = {
   apiKey: "AIzaSyB6NgRD22IG5l2qQ0O-299N1fOjTPNcVF8",
   authDomain: "tbbbbt-90f6e.firebaseapp.com",
@@ -20,7 +20,6 @@ const db = getFirestore(app);
 // متغيرات اللعبة
 let players = [];
 let currentPlayerIndex = 0;
-let gameTimer = null;
 const MAX_CELL = 86;
 
 // سلالم وثعابين
@@ -30,13 +29,11 @@ const snakes = { 17: 7, 54: 34, 62: 19, 71: 50, 87: 36, 93: 73, 95: 75, 98: 79 }
 // عناصر DOM
 const authScreen = document.getElementById('auth-screen');
 const mainScreen = document.getElementById('main-screen');
-const waitingScreen = document.getElementById('waiting-screen');
 const gameScreen = document.getElementById('game-screen');
 const displayNameSpan = document.getElementById('display-name');
 const friendsList = document.getElementById('friends');
 const loginError = document.getElementById('login-error');
 const signupError = document.getElementById('signup-error');
-const timerSpan = document.getElementById('timer');
 
 // مراقبة حالة المصادقة
 onAuthStateChanged(auth, async (user) => {
@@ -60,14 +57,13 @@ onAuthStateChanged(auth, async (user) => {
     }
   } else {
     mainScreen.classList.remove('active');
-    waitingScreen.classList.remove('active');
     gameScreen.classList.remove('active');
     authScreen.classList.add('active');
     showTab('login');
   }
 });
 
-// تبديل التبويب
+// تبديل التبويب (تسجيل الدخول / إنشاء حساب)
 window.showTab = function(tab) {
   document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
   if (tab === 'login') {
@@ -81,7 +77,7 @@ window.showTab = function(tab) {
   }
 };
 
-// إنشاء حساب
+// إنشاء حساب جديد
 window.signup = async function() {
   const username = document.getElementById('signup-username').value.trim();
   const email = document.getElementById('signup-email').value.trim();
@@ -207,10 +203,10 @@ async function removeFriend(friendId) {
   }
 }
 
-// بدء اللعبة - الانتقال إلى غرفة الانتظار
+// بدء اللعبة (مباشرة إلى ساحة اللعب)
 window.startGame = function() {
   mainScreen.classList.remove('active');
-  waitingScreen.classList.add('active');
+  gameScreen.classList.add('active');
   
   const user = auth.currentUser;
   if (!user) return;
@@ -218,7 +214,7 @@ window.startGame = function() {
   getDoc(doc(db, 'users', user.uid)).then(userDoc => {
     const username = userDoc.exists() ? userDoc.data().username : user.email;
     
-    // 4 لاعبين
+    // 4 لاعبين: المستخدم الحالي و3 أصدقاء افتراضيين
     players = [
       { name: username, position: 1, piece: '🔴', uid: user.uid },
       { name: 'صديق 1', position: 1, piece: '🔵', uid: 'friend1' },
@@ -226,53 +222,10 @@ window.startGame = function() {
       { name: 'صديق 3', position: 1, piece: '🟡', uid: 'friend3' }
     ];
     
-    displayPlayers(players);
-    
-    // بدء العد التنازلي
-    startCountdown(10);
+    createBoard();
+    initializeGame();
   });
 };
-
-// عرض اللاعبين في غرفة الانتظار
-function displayPlayers(playersArray) {
-  const listDiv = document.getElementById('players-list');
-  listDiv.innerHTML = '';
-  playersArray.forEach(p => {
-    const div = document.createElement('div');
-    div.classList.add('player-icon');
-    div.textContent = p.piece + ' ' + p.name;
-    listDiv.appendChild(div);
-  });
-}
-
-// دالة العد التنازلي (مضمونة العمل)
-function startCountdown(seconds) {
-  let timeLeft = seconds;
-  timerSpan.textContent = timeLeft;
-  
-  if (gameTimer) clearInterval(gameTimer);
-  
-  gameTimer = setInterval(() => {
-    timeLeft -= 1;
-    timerSpan.textContent = timeLeft;
-    
-    if (timeLeft <= 0) {
-      clearInterval(gameTimer);
-      gameTimer = null;
-      // الانتقال إلى اللعبة
-      goToGame();
-    }
-  }, 1000);
-}
-
-// الانتقال إلى ساحة اللعب
-function goToGame() {
-  waitingScreen.classList.remove('active');
-  gameScreen.classList.add('active');
-  
-  createBoard();
-  initializeGame();
-}
 
 // إنشاء اللوحة
 function createBoard() {
@@ -283,23 +236,9 @@ function createBoard() {
   for (let i = 1; i <= MAX_CELL; i++) {
     const cell = document.createElement('div');
     cell.classList.add('cell');
+    if (i === 1) cell.classList.add('start');
     cell.id = `cell-${i}`;
     cell.textContent = i;
-    
-    if (i === 1) {
-      cell.style.background = '#fefcbf';
-      cell.style.border = '2px solid #d69e2e';
-      cell.style.position = 'relative';
-      
-      const startLabel = document.createElement('span');
-      startLabel.textContent = 'START';
-      startLabel.style.position = 'absolute';
-      startLabel.style.bottom = '-15px';
-      startLabel.style.fontSize = '8px';
-      startLabel.style.color = '#d69e2e';
-      cell.appendChild(startLabel);
-    }
-    
     boardDiv.appendChild(cell);
   }
 }
@@ -334,7 +273,7 @@ function updateStatus() {
     const div = document.createElement('div');
     div.textContent = `${p.piece} ${p.name} - المربع ${p.position}`;
     if (index === currentPlayerIndex) {
-      div.style.backgroundColor = '#f6ad55';
+      div.classList.add('current');
     }
     statusDiv.appendChild(div);
   });
@@ -385,8 +324,4 @@ function resetGame() {
 window.leaveGame = function() {
   gameScreen.classList.remove('active');
   mainScreen.classList.add('active');
-  if (gameTimer) {
-    clearInterval(gameTimer);
-    gameTimer = null;
-  }
 };

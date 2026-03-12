@@ -21,26 +21,11 @@ const db = getFirestore(app);
 let players = [];
 let currentPlayerIndex = 0;
 let gameTimer = null;
-const MAX_CELL = 86; // لوحة مكونة من 86 مربعاً
+const MAX_CELL = 86;
 
-// سلالم وثعابين عشوائية (يمكنك تعديلها)
-const ladders = {
-  4: 14,
-  9: 31,
-  20: 38,
-  28: 84,
-  40: 59,
-  63: 81
-};
-const snakes = {
-  17: 7,
-  54: 34,
-  62: 19,
-  87: 36, // ليس موجوداً لأن MAX_CELL=86
-  93: 73,
-  95: 75,
-  98: 79
-};
+// سلالم وثعابين بسيطة
+const ladders = { 4: 14, 9: 31, 20: 38, 28: 84, 40: 59, 63: 81 };
+const snakes = { 17: 7, 54: 34, 62: 19, 71: 50, 87: 36, 93: 73, 95: 75, 98: 79 };
 
 // عناصر DOM
 const authScreen = document.getElementById('auth-screen');
@@ -253,6 +238,7 @@ window.startGame = function() {
       timerSpan.textContent = timeLeft;
       if (timeLeft <= 0) {
         clearInterval(gameTimer);
+        // الانتقال إلى اللعبة
         startPlaying();
       }
     }, 1000);
@@ -276,116 +262,41 @@ function startPlaying() {
   waitingScreen.classList.remove('active');
   gameScreen.classList.add('active');
   
-  createBoard();
-  initializeGame();
+  createBoard();       // إنشاء اللوحة
+  initializeGame();    // تهيئة مواقع اللاعبين
 }
 
-// إنشاء لوحة متعرجة (ثعبان) من 1 إلى 86
+// إنشاء لوحة بسيطة من 1 إلى 86
 function createBoard() {
   const boardDiv = document.getElementById('board');
   boardDiv.innerHTML = '';
+  // استخدام grid بسيط: 10 أعمدة (يمكن تعديلها)
+  boardDiv.style.gridTemplateColumns = 'repeat(10, 1fr)';
   
-  // نحتاج إلى 15 صفاً (86/6 = 14.33 -> 15 صفاً، آخر صف به رقمين)
-  const rows = 15;
-  const cols = 6;
-  let number = 1;
-  
-  for (let row = rows - 1; row >= 0; row--) { // نبدأ من الصف السفلي (row = 14) إلى الأعلى
-    const rowDiv = document.createElement('div');
-    rowDiv.style.display = 'contents'; // لتوزيع الخلايا ضمن grid
+  for (let i = 1; i <= MAX_CELL; i++) {
+    const cell = document.createElement('div');
+    cell.classList.add('cell');
+    cell.id = `cell-${i}`;
+    cell.textContent = i;
     
-    // تحديد اتجاه الصف: الصفوف الزوجية (من الأسفل) من اليسار لليمين، الفردية من اليمين لليسار
-    // row = 14 (سفلي) زوجي -> يسار ليمين
-    // row = 13 -> يمين لليسار
-    const isEvenRow = (row % 2 === 0); // بما أننا نبدأ من 14 (زوجي)
+    // تمييز خانة البداية
+    if (i === 1) {
+      cell.style.background = '#fefcbf';
+      cell.style.border = '2px solid #d69e2e';
+      cell.setAttribute('data-start', 'START');
+      // إضافة نص START صغير
+      const startLabel = document.createElement('span');
+      startLabel.textContent = 'START';
+      startLabel.style.position = 'absolute';
+      startLabel.style.bottom = '-15px';
+      startLabel.style.fontSize = '8px';
+      startLabel.style.color = '#d69e2e';
+      cell.appendChild(startLabel);
+      cell.style.position = 'relative';
+    }
     
-    for (let col = 0; col < cols; col++) {
-      if (number > MAX_CELL) break; // توقف إذا تجاوزنا 86
-      
-      const cell = document.createElement('div');
-      cell.classList.add('cell');
-      cell.id = `cell-${number}`;
-      
-      // إظهار الرقم داخل الخلية
-      cell.textContent = number;
-      
-      // إضافة علامة START للرقم 1
-      if (number === 1) {
-        cell.classList.add('start-cell');
-      }
-      
-      // ترتيب الخلايا حسب الاتجاه
-      // بما أننا نستخدم grid مع 6 أعمدة، يمكننا إضافتها بالترتيب، ولكن الترتيب البصري سيعتمد على الـ order أو اتجاه الصف.
-      // سنقوم بإلحاق الخلايا بالترتيب، لكن سنضيف class للتحكم في الاتجاه عبر CSS إذا أردنا.
-      // ولكن الأسهل: نضيف الخلايا كما هي، وسيظهر الرقم داخلها. المستخدم سيرى الرقم، ولن يهتم بالترتيب البصري للأرقام المتجاورة، لأن اللعبة تعتمد على الرقم وليس الموقع.
-      // ولكن لتحقيق التأثير المتعرج، يجب أن نضبط ترتيب الخانات في الصف. بما أن grid لا يغير الترتيب المنطقي، يمكننا إضافة الخلايا بترتيب عكسي عندما يكون الصف فردياً.
-      
-      if (!isEvenRow) {
-        // إذا كان الصف فردياً (من اليمين لليسار)، نضيف الخلية في بداية الصف (prepend) بدلاً من الإلحاق.
-        // لكن لأننا نستخدم grid مع display:contents، يمكننا إعادة ترتيب الأعمدة باستخدام order.
-        // بدلاً من التعقيد، سنقوم ببناء الصفوف في مصفوفة ثم عكسها.
-        // حل بسيط: سنقوم ببناء الصف في مصفوفة مؤقتة ثم نلحقها بالترتيب المناسب.
-        // هذا أسهل.
-      }
-      
-      // الطريقة المبسطة: سنقوم ببناء كل صف بشكل منفصل في rowDiv.
-      // سأستخدم أسلوباً واضحاً: ننشئ خلية ونضيفها إلى rowDiv بالترتيب المطلوب.
-      // ولكن rowDiv يجب أن يكون عنصراً واحداً يمثل الصف، وليس display:contents.
-      // لذا سأغير الطريقة: سأجعل #board شبكة (grid) وكل خلية توضع مباشرة.
-      // مع grid، الترتيب يعتمد على ترتيب عناصر HTML. لذا إذا أردنا صفاً معكوساً، نضيف خلاياه بترتيب عكسي.
-      
-      // لذلك سأقوم بإنشاء مصفوفة مؤقتة لكل صف.
-    }
+    boardDiv.appendChild(cell);
   }
-  
-  // الطريقة الأفضل: بناء كل الصفوف يدوياً مع عكس الترتيب عند الحاجة.
-  boardDiv.innerHTML = ''; // نبدأ من جديد
-  let nums = [];
-  for (let i = 1; i <= MAX_CELL; i++) nums.push(i);
-  
-  // ترتيب الأرقام حسب المسار المتعرج
-  let orderedNumbers = [];
-  let index = 0;
-  for (let row = 0; row < rows; row++) {
-    let rowNums = [];
-    for (let col = 0; col < cols; col++) {
-      if (index < MAX_CELL) {
-        rowNums.push(nums[index]);
-        index++;
-      } else {
-        rowNums.push(null);
-      }
-    }
-    if (row % 2 === 1) { // الصفوف الفردية من الأعلى (أو الزوجية حسب العد) نعكسها
-      rowNums.reverse();
-    }
-    orderedNumbers.push(...rowNums);
-  }
-  
-  // الآن orderedNumbers تحتوي على الأرقام بالترتيب الذي ستظهر به من الأعلى إلى الأسفل
-  // ولكن نريد البدء من الأسفل، لذا نعكس الصفوف
-  orderedNumbers = orderedNumbers.reverse();
-  
-  // إنشاء الخلايا بهذا الترتيب
-  orderedNumbers.forEach(num => {
-    if (num !== null) {
-      const cell = document.createElement('div');
-      cell.classList.add('cell');
-      cell.id = `cell-${num}`;
-      cell.textContent = num;
-      if (num === 1) {
-        cell.classList.add('start-cell');
-      }
-      boardDiv.appendChild(cell);
-    } else {
-      // خلية فارغة (لإكمال العدد)
-      const emptyCell = document.createElement('div');
-      emptyCell.classList.add('cell');
-      emptyCell.style.background = 'transparent';
-      emptyCell.style.boxShadow = 'none';
-      boardDiv.appendChild(emptyCell);
-    }
-  });
 }
 
 // تهيئة اللعبة
@@ -433,10 +344,10 @@ window.rollDice = function() {
   let newPosition = player.position + dice;
   
   if (newPosition > MAX_CELL) {
-    newPosition = player.position; // لا يتجاوز 86
+    newPosition = player.position; // لا يتجاوز
   }
   
-  // التحقق من الثعابين والسلالم
+  // تحقق من الثعابين والسلالم
   if (snakes[newPosition]) {
     newPosition = snakes[newPosition];
     alert(`🐍 ثعبان! انتقل إلى ${newPosition}`);

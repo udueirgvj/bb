@@ -11,11 +11,12 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    padding: 10px;
 }
 
 .screen {
     display: none;
-    width: 90%;
+    width: 100%;
     max-width: 1200px;
     background: white;
     border-radius: 20px;
@@ -179,45 +180,15 @@ body {
     color: white;
 }
 
-/* غرفة الانتظار */
-#players-list {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 20px;
-    margin: 30px 0;
-}
-
-.player-icon {
-    width: 80px;
-    height: 80px;
-    background: #667eea;
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    font-weight: bold;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
-
-#timer {
-    font-size: 24px;
-    font-weight: bold;
-    color: #e53e3e;
-}
-
 /* ساحة اللعب */
 #board {
     display: grid;
-    grid-template-columns: repeat(6, 1fr); /* 6 أعمدة كما في الصورة */
+    grid-template-columns: repeat(10, 1fr);
     gap: 2px;
     background: #2d3748;
     padding: 10px;
     border-radius: 10px;
     margin-bottom: 20px;
-    direction: ltr; /* نستخدم ltr لأن الترتيب سيتم التحكم به عبر JavaScript */
 }
 
 .cell {
@@ -232,20 +203,18 @@ body {
     border-radius: 3px;
 }
 
-/* تلوين خاص لخانة START (الرقم 1) */
-#cell-1 {
+.cell.start {
     background: #fefcbf;
     border: 2px solid #d69e2e;
-    font-weight: bold;
 }
 
-.cell.start-cell::after {
+.cell.start::after {
     content: "START";
     position: absolute;
-    bottom: -18px;
-    font-size: 10px;
+    bottom: -15px;
+    font-size: 8px;
     color: #d69e2e;
-    font-weight: bold;
+    white-space: nowrap;
 }
 
 .player-piece {
@@ -298,4 +267,8 @@ body {
     color: white;
     border-radius: 50px;
     font-size: 16px;
+}
+
+#players-status div.current {
+    background: #f6ad55;
 }

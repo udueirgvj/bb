@@ -211,12 +211,13 @@ body {
 /* ساحة اللعب */
 #board {
     display: grid;
-    grid-template-columns: repeat(20, 1fr);
+    grid-template-columns: repeat(6, 1fr); /* 6 أعمدة كما في الصورة */
     gap: 2px;
     background: #2d3748;
     padding: 10px;
     border-radius: 10px;
     margin-bottom: 20px;
+    direction: ltr; /* نستخدم ltr لأن الترتيب سيتم التحكم به عبر JavaScript */
 }
 
 .cell {
@@ -231,8 +232,20 @@ body {
     border-radius: 3px;
 }
 
-.cell:nth-child(even) {
-    background: #e2e8f0;
+/* تلوين خاص لخانة START (الرقم 1) */
+#cell-1 {
+    background: #fefcbf;
+    border: 2px solid #d69e2e;
+    font-weight: bold;
+}
+
+.cell.start-cell::after {
+    content: "START";
+    position: absolute;
+    bottom: -18px;
+    font-size: 10px;
+    color: #d69e2e;
+    font-weight: bold;
 }
 
 .player-piece {

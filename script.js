@@ -2,7 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, updateDoc, arrayUnion, arrayRemove, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-// إعداد Firebase (استخدم إعدادات مشروعك الخاص)
+// إعداد Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyB6NgRD22IG5l2qQ0O-299N1fOjTPNcVF8",
   authDomain: "tbbbbt-90f6e.firebaseapp.com",
@@ -23,7 +23,7 @@ let currentPlayerIndex = 0;
 let gameTimer = null;
 const MAX_CELL = 86;
 
-// سلالم وثعابين بسيطة
+// سلالم وثعابين
 const ladders = { 4: 14, 9: 31, 20: 38, 28: 84, 40: 59, 63: 81 };
 const snakes = { 17: 7, 54: 34, 62: 19, 71: 50, 87: 36, 93: 73, 95: 75, 98: 79 };
 
@@ -36,6 +36,7 @@ const displayNameSpan = document.getElementById('display-name');
 const friendsList = document.getElementById('friends');
 const loginError = document.getElementById('login-error');
 const signupError = document.getElementById('signup-error');
+const timerSpan = document.getElementById('timer');
 
 // مراقبة حالة المصادقة
 onAuthStateChanged(auth, async (user) => {
@@ -206,7 +207,7 @@ async function removeFriend(friendId) {
   }
 }
 
-// بدء اللعبة (الانتقال إلى غرفة الانتظار)
+// بدء اللعبة - الانتقال إلى غرفة الانتظار
 window.startGame = function() {
   mainScreen.classList.remove('active');
   waitingScreen.classList.add('active');
@@ -217,7 +218,7 @@ window.startGame = function() {
   getDoc(doc(db, 'users', user.uid)).then(userDoc => {
     const username = userDoc.exists() ? userDoc.data().username : user.email;
     
-    // 4 لاعبين: المستخدم الحالي و3 أصدقاء افتراضيين
+    // 4 لاعبين
     players = [
       { name: username, position: 1, piece: '🔴', uid: user.uid },
       { name: 'صديق 1', position: 1, piece: '🔵', uid: 'friend1' },
@@ -227,21 +228,8 @@ window.startGame = function() {
     
     displayPlayers(players);
     
-    // عد تنازلي 10 ثوانٍ
-    let timeLeft = 10;
-    const timerSpan = document.getElementById('timer');
-    timerSpan.textContent = timeLeft;
-    
-    if (gameTimer) clearInterval(gameTimer);
-    gameTimer = setInterval(() => {
-      timeLeft--;
-      timerSpan.textContent = timeLeft;
-      if (timeLeft <= 0) {
-        clearInterval(gameTimer);
-        // الانتقال إلى اللعبة
-        startPlaying();
-      }
-    }, 1000);
+    // بدء العد التنازلي
+    startCountdown(10);
   });
 };
 
@@ -257,20 +245,39 @@ function displayPlayers(playersArray) {
   });
 }
 
-// بدء اللعبة فعلياً
-function startPlaying() {
+// دالة العد التنازلي (مضمونة العمل)
+function startCountdown(seconds) {
+  let timeLeft = seconds;
+  timerSpan.textContent = timeLeft;
+  
+  if (gameTimer) clearInterval(gameTimer);
+  
+  gameTimer = setInterval(() => {
+    timeLeft -= 1;
+    timerSpan.textContent = timeLeft;
+    
+    if (timeLeft <= 0) {
+      clearInterval(gameTimer);
+      gameTimer = null;
+      // الانتقال إلى اللعبة
+      goToGame();
+    }
+  }, 1000);
+}
+
+// الانتقال إلى ساحة اللعب
+function goToGame() {
   waitingScreen.classList.remove('active');
   gameScreen.classList.add('active');
   
-  createBoard();       // إنشاء اللوحة
-  initializeGame();    // تهيئة مواقع اللاعبين
+  createBoard();
+  initializeGame();
 }
 
-// إنشاء لوحة بسيطة من 1 إلى 86
+// إنشاء اللوحة
 function createBoard() {
   const boardDiv = document.getElementById('board');
   boardDiv.innerHTML = '';
-  // استخدام grid بسيط: 10 أعمدة (يمكن تعديلها)
   boardDiv.style.gridTemplateColumns = 'repeat(10, 1fr)';
   
   for (let i = 1; i <= MAX_CELL; i++) {
@@ -279,12 +286,11 @@ function createBoard() {
     cell.id = `cell-${i}`;
     cell.textContent = i;
     
-    // تمييز خانة البداية
     if (i === 1) {
       cell.style.background = '#fefcbf';
       cell.style.border = '2px solid #d69e2e';
-      cell.setAttribute('data-start', 'START');
-      // إضافة نص START صغير
+      cell.style.position = 'relative';
+      
       const startLabel = document.createElement('span');
       startLabel.textContent = 'START';
       startLabel.style.position = 'absolute';
@@ -292,7 +298,6 @@ function createBoard() {
       startLabel.style.fontSize = '8px';
       startLabel.style.color = '#d69e2e';
       cell.appendChild(startLabel);
-      cell.style.position = 'relative';
     }
     
     boardDiv.appendChild(cell);
@@ -344,10 +349,9 @@ window.rollDice = function() {
   let newPosition = player.position + dice;
   
   if (newPosition > MAX_CELL) {
-    newPosition = player.position; // لا يتجاوز
+    newPosition = player.position;
   }
   
-  // تحقق من الثعابين والسلالم
   if (snakes[newPosition]) {
     newPosition = snakes[newPosition];
     alert(`🐍 ثعبان! انتقل إلى ${newPosition}`);
@@ -365,7 +369,6 @@ window.rollDice = function() {
     return;
   }
   
-  // التبديل إلى اللاعب التالي
   currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
   updateStatus();
 };
@@ -382,5 +385,8 @@ function resetGame() {
 window.leaveGame = function() {
   gameScreen.classList.remove('active');
   mainScreen.classList.add('active');
-  if (gameTimer) clearInterval(gameTimer);
+  if (gameTimer) {
+    clearInterval(gameTimer);
+    gameTimer = null;
+  }
 };

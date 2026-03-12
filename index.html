@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لعبة الثعبان والسلم - بدون انتظار</title>
+    <title>لعبة الثعبان - نسخة الصورة</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- شاشة تسجيل الدخول / إنشاء حساب -->
+    <!-- شاشة تسجيل الدخول (نفس السابق) -->
     <div id="auth-screen" class="screen active">
         <div class="auth-container">
             <h2>مرحباً بك في اللعبة</h2>
@@ -15,14 +15,12 @@
                 <button class="tab-btn active" onclick="showTab('login')">تسجيل الدخول</button>
                 <button class="tab-btn" onclick="showTab('signup')">إنشاء حساب</button>
             </div>
-            <!-- نموذج تسجيل الدخول -->
             <div id="login-form" class="auth-form">
                 <input type="email" id="login-email" placeholder="البريد الإلكتروني" required>
                 <input type="password" id="login-password" placeholder="كلمة المرور" required>
                 <button onclick="login()">دخول</button>
                 <p id="login-error" class="error"></p>
             </div>
-            <!-- نموذج إنشاء حساب -->
             <div id="signup-form" class="auth-form" style="display: none;">
                 <input type="text" id="signup-username" placeholder="اسم المستخدم" required>
                 <input type="email" id="signup-email" placeholder="البريد الإلكتروني" required>
@@ -33,14 +31,12 @@
         </div>
     </div>
 
-    <!-- الصفحة الرئيسية (بعد تسجيل الدخول) -->
+    <!-- الصفحة الرئيسية -->
     <div id="main-screen" class="screen">
         <h2>أهلاً <span id="display-name"></span>!</h2>
         <div id="friends-list">
             <h3>قائمة الأصدقاء</h3>
-            <ul id="friends">
-                <!-- سيتم ملؤها من Firebase -->
-            </ul>
+            <ul id="friends"></ul>
             <div class="add-friend">
                 <input type="email" id="friend-email" placeholder="البريد الإلكتروني للصديق">
                 <button onclick="addFriend()">إضافة</button>
@@ -50,7 +46,7 @@
         <button class="logout-btn" onclick="logout()">تسجيل الخروج</button>
     </div>
 
-    <!-- ساحة اللعب (تظهر مباشرة) -->
+    <!-- ساحة اللعب (بالتصميم الجديد) -->
     <div id="game-screen" class="screen">
         <h2>ساحة اللعب</h2>
         <div id="board"></div>

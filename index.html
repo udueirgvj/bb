@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لعبة الثعبان والسلم - التصميم المتعرج</title>
+    <title>لعبة الثعبان والسلم - بدون انتظار</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -33,7 +33,7 @@
         </div>
     </div>
 
-    <!-- شاشة الصفحة الرئيسية (بعد تسجيل الدخول) -->
+    <!-- الصفحة الرئيسية (بعد تسجيل الدخول) -->
     <div id="main-screen" class="screen">
         <h2>أهلاً <span id="display-name"></span>!</h2>
         <div id="friends-list">
@@ -50,14 +50,7 @@
         <button class="logout-btn" onclick="logout()">تسجيل الخروج</button>
     </div>
 
-    <!-- شاشة غرفة الانتظار -->
-    <div id="waiting-screen" class="screen">
-        <h2>غرفة الانتظار</h2>
-        <div id="players-list"></div>
-        <p>الوقت المتبقي: <span id="timer">10</span> ثانية</p>
-    </div>
-
-    <!-- شاشة ساحة اللعب -->
+    <!-- ساحة اللعب (تظهر مباشرة) -->
     <div id="game-screen" class="screen">
         <h2>ساحة اللعب</h2>
         <div id="board"></div>
@@ -69,7 +62,6 @@
         <button onclick="leaveGame()" class="leave-btn">خروج</button>
     </div>
 
-    <!-- تضمين Firebase وملف البرنامج النصي -->
     <script type="module" src="script.js"></script>
 </body>
 </html>

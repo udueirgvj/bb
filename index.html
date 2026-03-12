@@ -1,7 +1,9 @@
-<!DOCTYPE html><html>
+<!DOCTYPE html>
+<html>
 <head>
 <meta charset="UTF-8">
-<title>Hide Game</title><style>
+<title>Hide Game - مطورة</title>
+<style>
 body{
 margin:0;
 background:#111;
@@ -32,30 +34,56 @@ border-radius:50%;
 left:30px;
 top:30px;
 }
-</style></head><body><canvas id="game"></canvas>
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
 
 <div id="joystick">
 <div id="stick"></div>
-</div><script>
+</div>
 
+<script>
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
+// اللاعب
 let player = {
-x:200,
-y:200,
-size:30
+x: 200,
+y: 200,
+width: 20,   // عرض جسم الشخصية
+height: 30   // ارتفاع الجسم
 };
 
+// العدو (ثابت حالياً)
 let enemy = {
-x:500,
-y:300,
-size:30
+x: 500,
+y: 300,
+size: 30
 };
 
+// الجدران (مصفوفة من المستطيلات)
+let walls = [
+    { x: 100, y: 100, width: 30, height: 200 },
+    { x: 300, y: 400, width: 200, height: 30 },
+    { x: 600, y: 150, width: 30, height: 250 },
+    { x: 400, y: 80,  width: 150, height: 30 },
+    { x: 50,  y: 500, width: 300, height: 30 }
+];
+
+// البوابة (تقع داخل جدار، لكننا نتعامل معها ككائن منفصل)
+let gate = {
+    x: 150,
+    y: 100,
+    width: 40,
+    height: 40,
+    active: true
+};
+
+// متغيرات حركة اللاعب من عصا التحكم
 let moveX = 0;
 let moveY = 0;
 
@@ -64,83 +92,186 @@ const stick = document.getElementById("stick");
 
 let dragging = false;
 
-joystick.addEventListener("touchstart",()=>{
-dragging = true;
+// أحداث عصا التحكم (لللمس)
+joystick.addEventListener("touchstart", () => {
+    dragging = true;
 });
 
-document.addEventListener("touchend",()=>{
-dragging = false;
-moveX = 0;
-moveY = 0;
-stick.style.left = "30px";
-stick.style.top = "30px";
+document.addEventListener("touchend", () => {
+    dragging = false;
+    moveX = 0;
+    moveY = 0;
+    stick.style.left = "30px";
+    stick.style.top = "30px";
 });
 
-document.addEventListener("touchmove",(e)=>{
+document.addEventListener("touchmove", (e) => {
+    if (!dragging) return;
+    e.preventDefault(); // لمنع تمرير الصفحة
 
-if(!dragging) return;
+    let rect = joystick.getBoundingClientRect();
+    let x = e.touches[0].clientX - rect.left - 60;
+    let y = e.touches[0].clientY - rect.top - 60;
 
-let rect = joystick.getBoundingClientRect();
+    let dist = Math.sqrt(x * x + y * y);
+    let max = 40;
 
-let x = e.touches[0].clientX - rect.left - 60;
-let y = e.touches[0].clientY - rect.top - 60;
+    if (dist > max) {
+        x = (x / dist) * max;
+        y = (y / dist) * max;
+    }
 
-let dist = Math.sqrt(x*x + y*y);
-let max = 40;
+    stick.style.left = x + 30 + "px";
+    stick.style.top = y + 30 + "px";
 
-if(dist > max){
-x = x / dist * max;
-y = y / dist * max;
-}
-
-stick.style.left = x + 30 + "px";
-stick.style.top = y + 30 + "px";
-
-moveX = x / max;
-moveY = y / max;
-
+    moveX = x / max;
+    moveY = y / max;
 });
 
-function update(){
-
-player.x += moveX * 5;
-player.y += moveY * 5;
-
-let dx = enemy.x - player.x;
-let dy = enemy.y - player.y;
-
-let dist = Math.sqrt(dx*dx + dy*dy);
-
-if(dist < 40){
-alert("تم العثور عليك!");
-player.x = 200;
-player.y = 200;
+// دالة التحقق من التصادم مع الجدران
+function collidesWithWalls(newX, newY, w, h) {
+    for (let wall of walls) {
+        if (newX < wall.x + wall.width &&
+            newX + w > wall.x &&
+            newY < wall.y + wall.height &&
+            newY + h > wall.y) {
+            return true; // هناك تصادم
+        }
+    }
+    return false;
 }
 
+// دالة التحقق من لمس البوابة
+function checkGate() {
+    if (!gate.active) return false;
+    if (player.x < gate.x + gate.width &&
+        player.x + player.width > gate.x &&
+        player.y < gate.y + gate.height &&
+        player.y + player.height > gate.y) {
+        // لمس البوابة
+        gate.active = false; // يمكن إعادة تفعيلها بعد فترة أو جعلها تختفي
+        alert("اجتزت البوابة!");
+        player.x = 200;
+        player.y = 200;
+        // إعادة تفعيل البوابة بعد ثانيتين (اختياري)
+        setTimeout(() => { gate.active = true; }, 2000);
+        return true;
+    }
+    return false;
 }
 
-function draw(){
+function update() {
+    // حساب الحركة المبدئية
+    let newX = player.x + moveX * 5;
+    let newY = player.y + moveY * 5;
 
-ctx.clearRect(0,0,canvas.width,canvas.height);
+    // التحقق من التصادم في الاتجاه الأفقي
+    if (!collidesWithWalls(newX, player.y, player.width, player.height)) {
+        player.x = newX;
+    }
+    // التحقق من التصادم في الاتجاه الرأسي
+    if (!collidesWithWalls(player.x, newY, player.width, player.height)) {
+        player.y = newY;
+    }
 
-ctx.fillStyle = "lime";
-ctx.fillRect(player.x,player.y,player.size,player.size);
+    // حدود الخريطة (منع الخروج من الشاشة)
+    player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+    player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
 
-ctx.fillStyle = "red";
-ctx.fillRect(enemy.x,enemy.y,enemy.size,enemy.size);
+    // التحقق من البوابة
+    checkGate();
 
+    // التحقق من العدو
+    let dx = enemy.x - (player.x + player.width/2);
+    let dy = enemy.y - (player.y + player.height/2);
+    let dist = Math.sqrt(dx*dx + dy*dy);
+    if (dist < 40) {
+        alert("تم العثور عليك!");
+        player.x = 200;
+        player.y = 200;
+    }
 }
 
-function loop(){
+// دالة رسم الشخصية
+function drawPlayer() {
+    let x = player.x;
+    let y = player.y;
+    let w = player.width;
+    let h = player.height;
 
-update();
-draw();
+    // رسم الجسم (قميص)
+    ctx.fillStyle = "dodgerblue";
+    ctx.fillRect(x, y + 10, w, h - 10); // الجسم من تحت الرأس
 
-requestAnimationFrame(loop);
+    // رسم الرأس
+    ctx.fillStyle = "peachpuff";
+    ctx.beginPath();
+    ctx.arc(x + w/2, y + 8, 10, 0, Math.PI * 2);
+    ctx.fill();
 
+    // رسم العينين
+    ctx.fillStyle = "black";
+    ctx.beginPath();
+    ctx.arc(x + w/2 - 4, y + 5, 2, 0, Math.PI*2);
+    ctx.arc(x + w/2 + 4, y + 5, 2, 0, Math.PI*2);
+    ctx.fill();
+
+    // رسم الأذرع (خطوط)
+    ctx.beginPath();
+    ctx.strokeStyle = "peachpuff";
+    ctx.lineWidth = 4;
+    // ذراع أيسر
+    ctx.moveTo(x, y + 15);
+    ctx.lineTo(x - 8, y + 25);
+    // ذراع أيمن
+    ctx.moveTo(x + w, y + 15);
+    ctx.lineTo(x + w + 8, y + 25);
+    ctx.stroke();
+
+    // رسم الأرجل (خطوط)
+    ctx.beginPath();
+    ctx.strokeStyle = "brown";
+    ctx.lineWidth = 4;
+    ctx.moveTo(x + 5, y + h - 5);
+    ctx.lineTo(x + 2, y + h + 10);
+    ctx.moveTo(x + w - 5, y + h - 5);
+    ctx.lineTo(x + w - 2, y + h + 10);
+    ctx.stroke();
+}
+
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // رسم الجدران
+    ctx.fillStyle = "#888";
+    for (let wall of walls) {
+        ctx.fillRect(wall.x, wall.y, wall.width, wall.height);
+    }
+
+    // رسم البوابة إذا كانت نشطة
+    if (gate.active) {
+        ctx.fillStyle = "gold";
+        ctx.fillRect(gate.x, gate.y, gate.width, gate.height);
+        ctx.fillStyle = "black";
+        ctx.font = "12px Arial";
+        ctx.fillText("بوابة", gate.x, gate.y - 5);
+    }
+
+    // رسم العدو (يظل مربعاً أحمر)
+    ctx.fillStyle = "red";
+    ctx.fillRect(enemy.x, enemy.y, enemy.size, enemy.size);
+
+    // رسم الشخصية
+    drawPlayer();
+}
+
+function loop() {
+    update();
+    draw();
+    requestAnimationFrame(loop);
 }
 
 loop();
-
-</script></body>
+</script>
+</body>
 </html>

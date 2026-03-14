@@ -1,540 +1,623 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>الثعابين والسلالم</title>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap');
-*{margin:0;padding:0;box-sizing:border-box;}
-html,body{
-  width:100%;height:100%;overflow:hidden;
-  font-family:'Tajawal',sans-serif;
-  background:#b71c1c;
-  display:flex;align-items:center;justify-content:center;
-}
-/* الشاشة الرئيسية */
-#main-menu{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  gap:30px;
-  width:100vw;
-  height:100vh;
-  background:linear-gradient(135deg,#1a0022,#0a1040);
-  color:#FFD700;
-}
-#main-menu h1{
-  font-size:3rem;
-  font-weight:900;
-  text-shadow:0 0 20px #FFD700;
-}
-#main-menu button{
-  padding:20px 60px;
-  font-size:2rem;
-  font-weight:900;
-  background:linear-gradient(135deg,#FFD700,#FF8C00);
-  border:none;
-  border-radius:50px;
-  cursor:pointer;
-  box-shadow:0 0 30px #FFD700;
-  transition:0.3s;
-}
-#main-menu button:hover{
-  transform:scale(1.1);
-  box-shadow:0 0 50px #FFD700;
-}
-/* شاشة اللعبة */
-#game-container{
-  display:none;
-  width:100vw;
-  height:100vh;
-  background:#b71c1c;
-  align-items:center;
-  justify-content:center;
-  gap:8px;
-  padding:8px;
-}
-#board-wrap{
-  position:relative;flex-shrink:0;
-  line-height:0;
-}
-#board-canvas{
-  display:block;
-  border:4px solid #FFD700;
-  border-radius:4px;
-  box-shadow:0 0 0 2px #880000, 0 6px 30px rgba(0,0,0,0.7);
-}
-#token-canvas{
-  position:absolute;top:0;left:0;
-  pointer-events:none;
-}
-/* PANEL */
-#panel{
-  display:flex;flex-direction:column;gap:7px;
-  flex:1;min-width:130px;max-width:180px;
-  overflow:hidden;align-self:center;
-}
-.pbox{
-  background:rgba(0,0,0,0.4);
-  border:2px solid rgba(255,215,0,0.35);
-  border-radius:12px;padding:8px;color:#fff;
-}
-.pbox h3{
-  color:#FFD700;font-size:0.82rem;font-weight:900;
-  text-align:center;
-  border-bottom:1px solid rgba(255,215,0,0.3);
-  padding-bottom:5px;margin-bottom:7px;
-}
-.pcard{
-  display:flex;align-items:center;gap:5px;
-  padding:5px 6px;border-radius:8px;
-  border:2px solid transparent;
-  background:rgba(0,0,0,0.2);
-  margin-bottom:5px;transition:all 0.3s;
-}
-.pcard.active{border-color:#FFD700;background:rgba(255,215,0,0.12);}
-.pdot{width:16px;height:16px;border-radius:50%;border:2px solid #fff;flex-shrink:0;}
-.pname{font-size:0.72rem;font-weight:700;}
-.ppos{font-size:0.63rem;color:rgba(255,255,255,0.6);}
-.pturn{background:#FFD700;color:#000;font-size:0.52rem;font-weight:900;
-  padding:1px 4px;border-radius:5px;display:none;margin-right:auto;}
-.pcard.active .pturn{display:block;}
-/* DICE */
-#dice-box{text-align:center;}
-#dice-display{
-  width:60px;height:60px;
-  background:white;border-radius:10px;
-  margin:0 auto 8px;
-  box-shadow:0 3px 10px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.9);
-  position:relative;overflow:hidden;
-  animation-name:none;
-}
-#dice-display.rolling{animation:rollA 0.5s ease;}
-@keyframes rollA{
-  0%{transform:rotate(0)scale(1);}
-  25%{transform:rotate(18deg)scale(1.1);}
-  50%{transform:rotate(-12deg)scale(0.9);}
-  75%{transform:rotate(8deg)scale(1.05);}
-  100%{transform:rotate(0)scale(1);}
-}
-#dice-canvas{display:block;width:60px;height:60px;}
-#roll-btn{
-  width:100%;padding:9px;
-  background:linear-gradient(135deg,#FFD700,#FF8C00);
-  color:#000;border:none;border-radius:22px;
-  font-family:'Tajawal',sans-serif;font-size:0.92rem;font-weight:900;
-  cursor:pointer;
-  box-shadow:0 3px 12px rgba(255,140,0,0.5);
-  transition:all 0.2s;margin-bottom:5px;
-}
-#roll-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 5px 18px rgba(255,140,0,0.7);}
-#roll-btn:disabled{opacity:0.45;cursor:not-allowed;}
-#reset-btn{
-  width:100%;padding:6px;
-  background:rgba(255,255,255,0.1);color:#fff;
-  border:1px solid rgba(255,255,255,0.3);
-  border-radius:16px;font-family:'Tajawal',sans-serif;
-  font-size:0.78rem;font-weight:700;cursor:pointer;transition:all 0.2s;
-}
-#reset-btn:hover{background:rgba(255,255,255,0.2);}
-#msg{
-  padding:6px 8px;border-radius:8px;
-  font-size:0.74rem;font-weight:700;
-  text-align:center;min-height:36px;
-  display:flex;align-items:center;justify-content:center;
-  background:rgba(0,0,0,0.3);
-  border:1px solid rgba(255,255,255,0.1);
-  color:#fff;line-height:1.3;margin-top:4px;
-}
-#msg.snake{background:rgba(200,30,30,0.35);border-color:#FF5252;color:#FFCDD2;}
-#msg.ladder{background:rgba(30,150,30,0.35);border-color:#66BB6A;color:#C8E6C9;}
-#msg.win{background:rgba(255,215,0,0.25);border-color:#FFD700;color:#FFD700;}
-/* WIN */
-#win-ov{display:none;position:fixed;inset:0;
-  background:rgba(0,0,0,0.85);z-index:999;
-  align-items:center;justify-content:center;}
-#win-ov.show{display:flex;}
-.winbox{
-  background:linear-gradient(135deg,#1a0022,#0a1040);
-  border:3px solid #FFD700;border-radius:18px;
-  padding:36px;text-align:center;
-  box-shadow:0 0 60px rgba(255,215,0,0.5);
-  animation:popin 0.5s cubic-bezier(0.34,1.56,0.64,1);
-}
-@keyframes popin{from{transform:scale(0.3);opacity:0;}to{transform:scale(1);opacity:1;}}
-.winbox .we{font-size:3.5rem;margin-bottom:8px;}
-.winbox .wt{color:#FFD700;font-size:1.8rem;font-weight:900;margin-bottom:6px;}
-.winbox .ws{color:#fff;font-size:1rem;margin-bottom:18px;}
-.winbox button{
-  background:linear-gradient(135deg,#FFD700,#FF8C00);
-  color:#000;border:none;padding:10px 28px;
-  border-radius:22px;font-family:'Tajawal',sans-serif;
-  font-size:1rem;font-weight:900;cursor:pointer;
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>الثعابين والسلالم</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap');
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Tajawal', sans-serif;
+      background: #b71c1c;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 10px;
+    }
+    #game-container {
+      display: flex;
+      flex-direction: row;
+      gap: 10px;
+      background: #b71c1c;
+      border-radius: 12px;
+      padding: 10px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.6);
+      max-width: 1200px;
+      width: fit-content;
+    }
+    /* اللوحة */
+    #board-wrapper {
+      position: relative;
+      flex-shrink: 0;
+    }
+    #board-canvas, #token-canvas {
+      display: block;
+      border: 4px solid #FFD700;
+      border-radius: 4px;
+    }
+    #token-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+    }
+    /* لوحة المعلومات */
+    #panel {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 200px;
+      color: white;
+    }
+    .card {
+      background: rgba(0, 0, 0, 0.5);
+      border: 2px solid rgba(255,215,0,0.5);
+      border-radius: 12px;
+      padding: 12px;
+    }
+    .card h3 {
+      color: #FFD700;
+      font-size: 1.1rem;
+      border-bottom: 1px solid rgba(255,215,0,0.3);
+      padding-bottom: 5px;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    /* قائمة اللاعبين */
+    .player-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 8px;
+      padding: 6px;
+      margin-bottom: 5px;
+      border: 2px solid transparent;
+    }
+    .player-item.active {
+      border-color: #FFD700;
+      background: rgba(255,215,0,0.15);
+    }
+    .player-dot {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 2px solid white;
+    }
+    .player-info {
+      flex: 1;
+    }
+    .player-name {
+      font-weight: 700;
+      font-size: 0.85rem;
+    }
+    .player-pos {
+      font-size: 0.7rem;
+      color: rgba(255,255,255,0.7);
+    }
+    .turn-badge {
+      background: #FFD700;
+      color: #000;
+      font-size: 0.6rem;
+      font-weight: 900;
+      padding: 2px 6px;
+      border-radius: 10px;
+      display: none;
+    }
+    .player-item.active .turn-badge {
+      display: block;
+    }
+    /* النرد */
+    .dice-area {
+      text-align: center;
+    }
+    .dice-box {
+      width: 80px;
+      height: 80px;
+      background: white;
+      border-radius: 12px;
+      margin: 0 auto 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 5px 10px rgba(0,0,0,0.5);
+      transition: transform 0.1s;
+    }
+    .dice-box.rolling {
+      animation: roll 0.3s ease;
+    }
+    @keyframes roll {
+      0% { transform: rotate(0deg) scale(1); }
+      25% { transform: rotate(90deg) scale(1.1); }
+      50% { transform: rotate(180deg) scale(1); }
+      75% { transform: rotate(270deg) scale(1.1); }
+      100% { transform: rotate(360deg) scale(1); }
+    }
+    #dice-canvas {
+      width: 60px;
+      height: 60px;
+    }
+    #roll-btn {
+      background: linear-gradient(135deg, #FFD700, #FF8C00);
+      border: none;
+      border-radius: 30px;
+      padding: 10px 0;
+      width: 100%;
+      font-weight: 900;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-bottom: 8px;
+      transition: 0.2s;
+    }
+    #roll-btn:hover:not(:disabled) {
+      transform: scale(1.02);
+      box-shadow: 0 0 15px #FFD700;
+    }
+    #roll-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    #reset-btn {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: white;
+      border-radius: 20px;
+      padding: 8px;
+      width: 100%;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    #reset-btn:hover {
+      background: rgba(255,255,255,0.2);
+    }
+    #message {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 8px;
+      padding: 8px;
+      font-size: 0.9rem;
+      text-align: center;
+      margin-top: 8px;
+    }
+    #message.snake { background: rgba(200,30,30,0.5); border-color: #FF5252; }
+    #message.ladder { background: rgba(30,150,30,0.5); border-color: #66BB6A; }
+    #message.win { background: rgba(255,215,0,0.3); border-color: #FFD700; color: #FFD700; }
+    /* نافذة الفوز */
+    #win-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.9);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .win-box {
+      background: linear-gradient(135deg, #1a0022, #0a1040);
+      border: 3px solid #FFD700;
+      border-radius: 20px;
+      padding: 40px;
+      text-align: center;
+      color: white;
+      animation: pop 0.5s;
+    }
+    @keyframes pop {
+      0% { transform: scale(0); }
+      80% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+    .win-box .trophy { font-size: 4rem; }
+    .win-box h2 { color: #FFD700; font-size: 2rem; margin: 10px 0; }
+    .win-box button {
+      background: linear-gradient(135deg, #FFD700, #FF8C00);
+      border: none;
+      border-radius: 30px;
+      padding: 10px 30px;
+      font-weight: 900;
+      font-size: 1.2rem;
+      margin-top: 20px;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
-  <!-- الشاشة الرئيسية -->
-  <div id="main-menu">
-    <h1>🎲 الثعابين والسلالم 🐍</h1>
-    <button onclick="startGame()">▶ لعب</button>
-  </div>
-
-  <!-- حاوية اللعبة (تظهر بعد الضغط) -->
   <div id="game-container">
-    <div id="board-wrap">
-      <canvas id="board-canvas"></canvas>
-      <canvas id="token-canvas"></canvas>
+    <!-- الجهة اليسرى: لوحة اللعبة -->
+    <div id="board-wrapper">
+      <canvas id="board-canvas" width="500" height="500"></canvas>
+      <canvas id="token-canvas" width="500" height="500"></canvas>
     </div>
+
+    <!-- الجهة اليمنى: معلومات اللاعبين والنرد -->
     <div id="panel">
-      <div class="pbox">
+      <div class="card">
         <h3>🎮 اللاعبون</h3>
-        <div id="pcards"></div>
+        <div id="players-list"></div>
       </div>
-      <div class="pbox" id="dice-box">
+
+      <div class="card dice-area">
         <h3>🎲 النرد</h3>
-        <div id="dice-display"><canvas id="dice-canvas" width="60" height="60"></canvas></div>
-        <button id="roll-btn">ارمِ النرد!</button>
+        <div class="dice-box" id="dice-box">
+          <canvas id="dice-canvas" width="60" height="60"></canvas>
+        </div>
+        <button id="roll-btn">🎲 ارم النرد!</button>
         <button id="reset-btn">🔄 بداية جديدة</button>
-        <div id="msg">اضغط لرمي النرد!</div>
+        <div id="message">اضغط لبدء اللعب</div>
       </div>
     </div>
   </div>
 
   <!-- نافذة الفوز -->
-  <div id="win-ov">
-    <div class="winbox">
-      <div class="we">🏆</div>
-      <div class="wt">مبروك!</div>
-      <div class="ws" id="win-txt"></div>
+  <div id="win-overlay">
+    <div class="win-box">
+      <div class="trophy">🏆</div>
+      <h2 id="win-message">فاز اللاعب!</h2>
       <button onclick="resetGame()">العب مرة أخرى</button>
     </div>
   </div>
 
-<script>
-// ============================================================
-// CONFIG
-// ============================================================
-const PLAYER_COLORS = ['#e53935','#1565C0','#2e7d32','#F9A825'];
-const PLAYER_EMOJIS = ['🔴','🔵','🟢','🟡'];
-const PLAYER_NAMES  = ['لاعب 1','لاعب 2','لاعب 3','لاعب 4'];
+  <script>
+    // ==================== الإعدادات ====================
+    const PLAYER_COLORS = ['#e53935', '#1565C0', '#2e7d32', '#F9A825'];
+    const PLAYER_EMOJIS = ['🔴', '🔵', '🟢', '🟡'];
+    const PLAYER_NAMES = ['لاعب 1', 'لاعب 2', 'لاعب 3', 'لاعب 4'];
+    // الثعابين الكلاسيكية (الرأس => الذيل)
+    const SNAKES = [
+      { head: 98, tail: 78, color: '#388e3c' },
+      { head: 95, tail: 56, color: '#7b1fa2' },
+      { head: 93, tail: 73, color: '#e64a19' },
+      { head: 87, tail: 24, color: '#c62828' },
+      { head: 64, tail: 60, color: '#00838f' },
+      { head: 62, tail: 19, color: '#558b2f' },
+      { head: 49, tail: 11, color: '#e65100' },
+      { head: 48, tail: 26, color: '#00695c' },
+      { head: 16, tail: 6, color: '#6a1de8' }
+    ];
+    // السلالم (من => إلى)
+    const LADDERS = [
+      { from: 1, to: 38, color: '#8d4e1a' },
+      { from: 4, to: 14, color: '#1565C0' },
+      { from: 9, to: 31, color: '#2e7d32' },
+      { from: 20, to: 42, color: '#c62828' },
+      { from: 28, to: 84, color: '#4527a0' },
+      { from: 40, to: 59, color: '#00695c' },
+      { from: 51, to: 67, color: '#e65100' },
+      { from: 63, to: 81, color: '#1565C0' },
+      { from: 71, to: 91, color: '#2e7d32' }
+    ];
+    // ألوان المربعات
+    const CELL_COLORS = ['#e53935', '#FDD835', '#43A047', '#1E88E5'];
 
-// الثعابين الكلاسيكية
-const SNAKES = [
-  {head:98, tail:78, body:'#388e3c', head_c:'#1b5e20', belly:'#a5d6a7'},
-  {head:95, tail:56, body:'#7b1fa2', head_c:'#4a148c', belly:'#ce93d8'},
-  {head:93, tail:73, body:'#e64a19', head_c:'#bf360c', belly:'#ffccbc'},
-  {head:87, tail:24, body:'#c62828', head_c:'#7f0000', belly:'#ef9a9a'},
-  {head:64, tail:60, body:'#00838f', head_c:'#006064', belly:'#80deea'},
-  {head:62, tail:19, body:'#558b2f', head_c:'#33691e', belly:'#dcedc8'},
-  {head:49, tail:11, body:'#e65100', head_c:'#bf360c', belly:'#ffccbc'},
-  {head:48, tail:26, body:'#00695c', head_c:'#004d40', belly:'#b2dfdb'},
-  {head:16, tail:6,  body:'#6a1de8', head_c:'#311b92', belly:'#d1c4e9'},
-];
+    // ==================== حالة اللعبة ====================
+    let numPlayers = 2; // يمكن تغييرها إلى 4
+    let positions = [];
+    let currentPlayer = 0;
+    let busy = false;
+    let cellSize = 50; // سيتم حسابه لاحقاً
 
-// السلالم الكلاسيكية
-const LADDERS = [
-  {from:1,  to:38,  color:'#8d4e1a'},
-  {from:4,  to:14,  color:'#1565C0'},
-  {from:9,  to:31,  color:'#2e7d32'},
-  {from:20, to:42,  color:'#c62828'},
-  {from:28, to:84,  color:'#4527a0'},
-  {from:40, to:59,  color:'#00695c'},
-  {from:51, to:67,  color:'#e65100'},
-  {from:63, to:81,  color:'#1565C0'},
-  {from:71, to:91,  color:'#2e7d32'},
-];
+    // عناصر canvas
+    let boardCanvas, boardCtx, tokenCanvas, tokenCtx, diceCanvas, diceCtx;
 
-// ألوان المربعات
-const GRID_COLORS = ['#e53935','#FDD835','#43A047','#1E88E5'];
-
-// ============================================================
-// STATE
-// ============================================================
-let C = 52; // cell size (سيتم حسابه لاحقاً)
-let numPlayers = 2; // عدد اللاعبين ثابت 2
-let positions, currentPlayer, busy;
-let boardCanvas, boardCtx, tokenCanvas, tokenCtx, diceCanvas, diceCtx;
-
-// ============================================================
-// تحويل الرقم إلى إحداثيات (نمط متعرج)
-// ============================================================
-function numToGrid(n){
-  const idx = n - 1;
-  const row9 = Math.floor(idx / 10);
-  const col9 = idx % 10;
-  return { row: 9 - row9, col: (row9 % 2 === 0) ? col9 : 9 - col9 };
-}
-function cellCenter(n){
-  const {row,col} = numToGrid(n);
-  return { x: col*C + C/2, y: row*C + C/2 };
-}
-
-// ============================================================
-// رسم اللوحة
-// ============================================================
-function drawBoard(){
-  const S = C*10;
-  boardCanvas.width = S; boardCanvas.height = S;
-  const ctx = boardCtx;
-
-  for(let row=0;row<10;row++){
-    for(let col=0;col<10;col++){
-      const ci = (row*3 + col*7) % 4;
-      ctx.fillStyle = GRID_COLORS[ci];
-      ctx.fillRect(col*C, row*C, C, C);
-      ctx.strokeStyle = 'rgba(0,0,0,0.2)';
-      ctx.lineWidth = 0.7;
-      ctx.strokeRect(col*C+0.4, row*C+0.4, C-0.8, C-0.8);
+    // ==================== تحويل الرقم إلى إحداثيات (نمط متعرج) ====================
+    function numToGrid(n) {
+      const idx = n - 1;
+      const row9 = Math.floor(idx / 10);    // 0 = الصف العلوي (رقم 91-100)
+      const col9 = idx % 10;
+      // الصفوف الزوجية (من الأعلى) من اليسار لليمين، الفردية من اليمين لليسار
+      return {
+        row: 9 - row9,
+        col: (row9 % 2 === 0) ? col9 : 9 - col9
+      };
     }
-  }
 
-  SNAKES.forEach(s => drawSnake(ctx, s));
-  LADDERS.forEach(l => drawLadder(ctx, l));
-
-  ctx.textBaseline = 'top';
-  ctx.textAlign = 'right';
-  for(let n=1;n<=100;n++){
-    const {row,col} = numToGrid(n);
-    ctx.font = `bold ${Math.round(C*0.24)}px Tajawal,Arial`;
-    ctx.fillStyle = 'rgba(0,0,0,0.7)';
-    ctx.fillText(n, col*C + C - 3, row*C + 2);
-  }
-
-  const h = numToGrid(100);
-  ctx.font = `${Math.round(C*0.45)}px serif`;
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText('🏠', h.col*C+C/2, h.row*C+C/2);
-}
-
-// ============================================================
-// دوال الرسم المساعدة (مختصرة للاختصار، لكنها كاملة في الكود الأصلي)
-// سنستخدم نسخة مختصرة ولكنها تعمل
-// ============================================================
-function drawSnake(ctx, s){
-  const hc = cellCenter(s.head);
-  const tc = cellCenter(s.tail);
-  ctx.save();
-  ctx.strokeStyle = s.body;
-  ctx.lineWidth = C*0.25;
-  ctx.beginPath();
-  ctx.moveTo(tc.x, tc.y);
-  ctx.lineTo(hc.x, hc.y);
-  ctx.stroke();
-  ctx.restore();
-}
-function drawLadder(ctx, l){
-  const fc = cellCenter(l.from);
-  const tc = cellCenter(l.to);
-  ctx.save();
-  ctx.strokeStyle = l.color;
-  ctx.lineWidth = C*0.12;
-  ctx.beginPath();
-  ctx.moveTo(fc.x, fc.y);
-  ctx.lineTo(tc.x, tc.y);
-  ctx.stroke();
-  ctx.restore();
-}
-
-// ============================================================
-// رسم النرد
-// ============================================================
-const PIP_POS = {
-  1:[[0.5,0.5]],
-  2:[[0.25,0.25],[0.75,0.75]],
-  3:[[0.25,0.25],[0.5,0.5],[0.75,0.75]],
-  4:[[0.25,0.25],[0.75,0.25],[0.25,0.75],[0.75,0.75]],
-  5:[[0.25,0.25],[0.75,0.25],[0.5,0.5],[0.25,0.75],[0.75,0.75]],
-  6:[[0.25,0.2],[0.75,0.2],[0.25,0.5],[0.75,0.5],[0.25,0.8],[0.75,0.8]],
-};
-function drawDiceFace(val){
-  const dc=diceCanvas, dc2=diceCtx;
-  const W=dc.width, H=dc.height;
-  dc2.clearRect(0,0,W,H);
-  dc2.fillStyle='#fff';
-  dc2.fillRect(0,0,W,H);
-  dc2.strokeStyle='#ccc'; dc2.lineWidth=1.5;
-  dc2.strokeRect(1,1,W-2,H-2);
-  const pips = PIP_POS[val]||[];
-  const pr = W*0.1;
-  pips.forEach(([fx,fy])=>{
-    const x=fx*W, y=fy*H;
-    dc2.beginPath(); dc2.arc(x,y,pr,0,Math.PI*2);
-    dc2.fillStyle='#1a1a1a'; dc2.fill();
-  });
-}
-
-// ============================================================
-// رسم قطع اللاعبين
-// ============================================================
-function drawTokens(){
-  const tc=tokenCanvas, tc2=tokenCtx;
-  tc.width=boardCanvas.width; tc.height=boardCanvas.height;
-  tc2.clearRect(0,0,tc.width,tc.height);
-  const offsets = [ {ox:-C*0.14,oy:-C*0.14}, {ox:C*0.14,oy:-C*0.14}, {ox:-C*0.14,oy:C*0.14}, {ox:C*0.14,oy:C*0.14} ];
-  for(let i=0;i<numPlayers;i++){
-    const pos=positions[i];
-    if(pos<=0) continue;
-    const {x,y}=cellCenter(pos);
-    const {ox,oy}=offsets[i];
-    drawToken(tc2, x+ox, y+oy, PLAYER_COLORS[i], i===currentPlayer);
-  }
-}
-function drawToken(ctx2, x, y, color, active){
-  const r=C*0.17;
-  ctx2.save();
-  ctx2.shadowColor='rgba(0,0,0,0.5)'; ctx2.shadowBlur=4;
-  ctx2.beginPath();
-  ctx2.arc(x, y, r, 0, 2*Math.PI);
-  ctx2.fillStyle=color; ctx2.fill();
-  if(active){ ctx2.strokeStyle='#FFD700'; ctx2.lineWidth=2.5; }
-  else { ctx2.strokeStyle='rgba(255,255,255,0.7)'; ctx2.lineWidth=1.5; }
-  ctx2.stroke();
-  ctx2.restore();
-}
-
-// ============================================================
-// واجهة اللاعبين
-// ============================================================
-function buildPlayerCards(){
-  const c=document.getElementById('pcards');
-  c.innerHTML='';
-  for(let i=0;i<numPlayers;i++){
-    c.innerHTML+=`<div class="pcard${i===0?' active':''}" id="pc${i}">
-      <div class="pdot" style="background:${PLAYER_COLORS[i]}"></div>
-      <div><div class="pname">${PLAYER_EMOJIS[i]} ${PLAYER_NAMES[i]}</div>
-      <div class="ppos" id="pp${i}">الانتظار</div></div>
-      <div class="pturn">دورك</div>
-    </div>`;
-  }
-}
-function updateCards(){
-  for(let i=0;i<numPlayers;i++){
-    document.getElementById('pc'+i).className='pcard'+(i===currentPlayer?' active':'');
-    document.getElementById('pp'+i).textContent=positions[i]>0?`مربع ${positions[i]}`:'الانتظار';
-  }
-}
-function setMsg(txt,cls=''){
-  const m=document.getElementById('msg');
-  m.textContent=txt;m.className=cls;
-}
-
-// ============================================================
-// منطق اللعبة
-// ============================================================
-const delay = ms => new Promise(r=>setTimeout(r,ms));
-
-document.getElementById('roll-btn').addEventListener('click', async()=>{
-  if(busy) return;
-  busy=true;
-  document.getElementById('roll-btn').disabled=true;
-
-  const roll = Math.ceil(Math.random()*6);
-  const dd = document.getElementById('dice-display');
-  dd.classList.add('rolling');
-  for(let i=0;i<9;i++){ drawDiceFace(Math.ceil(Math.random()*6)); await delay(50); }
-  dd.classList.remove('rolling');
-  drawDiceFace(roll);
-
-  setMsg(`${PLAYER_EMOJIS[currentPlayer]} ${PLAYER_NAMES[currentPlayer]} رمى ${roll}`);
-  await delay(400);
-
-  const won = await movePlayer(currentPlayer, roll);
-  if(won) return;
-
-  currentPlayer = (currentPlayer+1) % numPlayers;
-  updateCards(); drawTokens();
-  setMsg(`${PLAYER_EMOJIS[currentPlayer]} دور ${PLAYER_NAMES[currentPlayer]}`);
-  busy=false;
-  document.getElementById('roll-btn').disabled=false;
-});
-
-async function movePlayer(pi, roll){
-  let pos = positions[pi];
-  const npos = pos + roll;
-  if(npos > 100){
-    setMsg(`${PLAYER_EMOJIS[pi]} تحتاج ${100-pos} بالضبط للفوز!`);
-    busy=false; document.getElementById('roll-btn').disabled=false;
-    return false;
-  }
-  positions[pi] = npos; drawTokens(); updateCards();
-  await delay(600);
-  if(npos === 100){
-    setMsg(`🏆 ${PLAYER_NAMES[pi]} فاز!`,'win');
-    document.getElementById('win-txt').textContent = `${PLAYER_EMOJIS[pi]} ${PLAYER_NAMES[pi]} وصل إلى 100 وفاز!`;
-    await delay(400);
-    document.getElementById('win-ov').classList.add('show');
-    return true;
-  }
-  const snake = SNAKES.find(s=>s.head === npos);
-  if(snake){
-    setMsg(`😱 ثعبان! ${npos} ← ${snake.tail}`,'snake');
-    await delay(900);
-    positions[pi] = snake.tail; drawTokens(); updateCards();
-  } else {
-    const ladder = LADDERS.find(l=>l.from === npos);
-    if(ladder){
-      setMsg(`🪜 سلم! ${npos} ↑ ${ladder.to}`,'ladder');
-      await delay(900);
-      positions[pi] = ladder.to; drawTokens(); updateCards();
-    } else {
-      setMsg(`${PLAYER_EMOJIS[pi]} انتقل إلى مربع ${npos}`);
+    function getCellCenter(n) {
+      const { row, col } = numToGrid(n);
+      return { x: col * cellSize + cellSize/2, y: row * cellSize + cellSize/2 };
     }
-  }
-  updateCards(); return false;
-}
 
-// ============================================================
-// إعادة الضبط
-// ============================================================
-function calcCellSize(){
-  const vw = window.innerWidth - 200, vh = window.innerHeight - 20;
-  return Math.floor(Math.min(vw, vh, 580) / 10);
-}
-function resetGame(){
-  document.getElementById('win-ov').classList.remove('show');
-  positions = new Array(numPlayers).fill(0);
-  currentPlayer = 0; busy = false;
-  updateCards(); drawTokens();
-  setMsg(`${PLAYER_EMOJIS[0]} دور ${PLAYER_NAMES[0]} - اضغط لرمي النرد!`);
-  document.getElementById('roll-btn').disabled = false;
-}
-document.getElementById('reset-btn').addEventListener('click', resetGame);
+    // ==================== رسم اللوحة ====================
+    function drawBoard() {
+      const size = cellSize * 10;
+      boardCanvas.width = size;
+      boardCanvas.height = size;
+      boardCtx.clearRect(0, 0, size, size);
 
-// ============================================================
-// بدء اللعبة (عند الضغط على زر لعب)
-// ============================================================
-function startGame(){
-  document.getElementById('main-menu').style.display = 'none';
-  document.getElementById('game-container').style.display = 'flex';
+      // رسم المربعات
+      for (let r = 0; r < 10; r++) {
+        for (let c = 0; c < 10; c++) {
+          const colorIndex = (r * 3 + c * 7) % 4;
+          boardCtx.fillStyle = CELL_COLORS[colorIndex];
+          boardCtx.fillRect(c * cellSize, r * cellSize, cellSize, cellSize);
+          boardCtx.strokeStyle = 'rgba(0,0,0,0.3)';
+          boardCtx.lineWidth = 0.5;
+          boardCtx.strokeRect(c * cellSize, r * cellSize, cellSize, cellSize);
+        }
+      }
 
-  // تهيئة العناصر
-  boardCanvas = document.getElementById('board-canvas');
-  boardCtx = boardCanvas.getContext('2d');
-  tokenCanvas = document.getElementById('token-canvas');
-  tokenCtx = tokenCanvas.getContext('2d');
-  diceCanvas = document.getElementById('dice-canvas');
-  diceCtx = diceCanvas.getContext('2d');
+      // رسم الثعابين
+      SNAKES.forEach(s => {
+        const head = getCellCenter(s.head);
+        const tail = getCellCenter(s.tail);
+        boardCtx.save();
+        boardCtx.strokeStyle = s.color;
+        boardCtx.lineWidth = cellSize * 0.2;
+        boardCtx.beginPath();
+        boardCtx.moveTo(tail.x, tail.y);
+        boardCtx.lineTo(head.x, head.y);
+        boardCtx.stroke();
+        boardCtx.restore();
+      });
 
-  numPlayers = 2; // عدد ثابت
-  positions = new Array(numPlayers).fill(0);
-  currentPlayer = 0; busy = false;
-  C = calcCellSize();
+      // رسم السلالم
+      LADDERS.forEach(l => {
+        const from = getCellCenter(l.from);
+        const to = getCellCenter(l.to);
+        boardCtx.save();
+        boardCtx.strokeStyle = l.color;
+        boardCtx.lineWidth = cellSize * 0.1;
+        boardCtx.beginPath();
+        boardCtx.moveTo(from.x, from.y);
+        boardCtx.lineTo(to.x, to.y);
+        boardCtx.stroke();
+        boardCtx.restore();
+      });
 
-  drawBoard();
-  buildPlayerCards();
-  drawTokens();
-  drawDiceFace(1);
-  setMsg(`${PLAYER_EMOJIS[0]} دور ${PLAYER_NAMES[0]} - اضغط لرمي النرد!`);
+      // رسم الأرقام
+      boardCtx.font = `bold ${cellSize * 0.25}px Tajawal, Arial`;
+      boardCtx.fillStyle = 'rgba(0,0,0,0.8)';
+      boardCtx.textAlign = 'right';
+      boardCtx.textBaseline = 'top';
+      for (let n = 1; n <= 100; n++) {
+        const { row, col } = numToGrid(n);
+        boardCtx.fillText(n, col * cellSize + cellSize - 3, row * cellSize + 2);
+      }
 
-  window.addEventListener('resize', ()=>{
-    C = calcCellSize();
-    drawBoard();
-    drawTokens();
-  });
-}
-</script>
+      // رسم رمز المنزل في 100
+      const home = getCellCenter(100);
+      boardCtx.font = `${cellSize * 0.4}px serif`;
+      boardCtx.textAlign = 'center';
+      boardCtx.textBaseline = 'middle';
+      boardCtx.fillText('🏠', home.x, home.y);
+    }
+
+    // ==================== رسم قطع اللاعبين ====================
+    function drawTokens() {
+      tokenCanvas.width = boardCanvas.width;
+      tokenCanvas.height = boardCanvas.height;
+      tokenCtx.clearRect(0, 0, tokenCanvas.width, tokenCanvas.height);
+
+      const offsets = [
+        { dx: -cellSize*0.15, dy: -cellSize*0.15 },
+        { dx: cellSize*0.15, dy: -cellSize*0.15 },
+        { dx: -cellSize*0.15, dy: cellSize*0.15 },
+        { dx: cellSize*0.15, dy: cellSize*0.15 }
+      ];
+
+      for (let i = 0; i < numPlayers; i++) {
+        if (positions[i] === 0) continue;
+        const center = getCellCenter(positions[i]);
+        const x = center.x + offsets[i].dx;
+        const y = center.y + offsets[i].dy;
+        drawToken(tokenCtx, x, y, PLAYER_COLORS[i], i === currentPlayer);
+      }
+    }
+
+    function drawToken(ctx, x, y, color, active) {
+      const r = cellSize * 0.17;
+      ctx.save();
+      ctx.shadowColor = 'rgba(0,0,0,0.5)';
+      ctx.shadowBlur = 5;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, 2 * Math.PI);
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.strokeStyle = active ? '#FFD700' : 'white';
+      ctx.lineWidth = active ? 3 : 1.5;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // ==================== رسم النرد ====================
+    const PIP_POS = {
+      1: [[0.5, 0.5]],
+      2: [[0.25, 0.25], [0.75, 0.75]],
+      3: [[0.25, 0.25], [0.5, 0.5], [0.75, 0.75]],
+      4: [[0.25, 0.25], [0.75, 0.25], [0.25, 0.75], [0.75, 0.75]],
+      5: [[0.25, 0.25], [0.75, 0.25], [0.5, 0.5], [0.25, 0.75], [0.75, 0.75]],
+      6: [[0.25, 0.2], [0.75, 0.2], [0.25, 0.5], [0.75, 0.5], [0.25, 0.8], [0.75, 0.8]]
+    };
+
+    function drawDiceFace(value) {
+      diceCtx.clearRect(0, 0, 60, 60);
+      diceCtx.fillStyle = 'white';
+      diceCtx.fillRect(0, 0, 60, 60);
+      diceCtx.strokeStyle = '#ccc';
+      diceCtx.lineWidth = 2;
+      diceCtx.strokeRect(1, 1, 58, 58);
+      const pips = PIP_POS[value] || [];
+      pips.forEach(([x, y]) => {
+        diceCtx.beginPath();
+        diceCtx.arc(x * 60, y * 60, 5, 0, 2 * Math.PI);
+        diceCtx.fillStyle = '#1a1a1a';
+        diceCtx.fill();
+      });
+    }
+
+    // ==================== واجهة اللاعبين ====================
+    function renderPlayersList() {
+      const container = document.getElementById('players-list');
+      container.innerHTML = '';
+      for (let i = 0; i < numPlayers; i++) {
+        const div = document.createElement('div');
+        div.className = `player-item ${i === currentPlayer ? 'active' : ''}`;
+        div.id = `player-${i}`;
+        div.innerHTML = `
+          <div class="player-dot" style="background: ${PLAYER_COLORS[i]};"></div>
+          <div class="player-info">
+            <div class="player-name">${PLAYER_EMOJIS[i]} ${PLAYER_NAMES[i]}</div>
+            <div class="player-pos" id="pos-${i}">${positions[i] ? 'مربع ' + positions[i] : 'البداية'}</div>
+          </div>
+          <div class="turn-badge">دورك</div>
+        `;
+        container.appendChild(div);
+      }
+    }
+
+    function updatePlayersList() {
+      for (let i = 0; i < numPlayers; i++) {
+        const item = document.getElementById(`player-${i}`);
+        if (item) {
+          item.className = `player-item ${i === currentPlayer ? 'active' : ''}`;
+          document.getElementById(`pos-${i}`).textContent = positions[i] ? 'مربع ' + positions[i] : 'البداية';
+        }
+      }
+    }
+
+    function setMessage(text, type = '') {
+      const msgDiv = document.getElementById('message');
+      msgDiv.textContent = text;
+      msgDiv.className = type;
+    }
+
+    // ==================== منطق الحركة ====================
+    async function movePlayer(playerIndex, steps) {
+      let newPos = positions[playerIndex] + steps;
+      if (newPos > 100) {
+        setMessage(`تحتاج ${100 - positions[playerIndex]} بالضبط للفوز!`);
+        return false;
+      }
+
+      positions[playerIndex] = newPos;
+      drawTokens();
+      updatePlayersList();
+      await delay(500);
+
+      if (newPos === 100) {
+        setMessage(`🎉 ${PLAYER_NAMES[playerIndex]} فاز!`, 'win');
+        document.getElementById('win-message').textContent = `${PLAYER_EMOJIS[playerIndex]} ${PLAYER_NAMES[playerIndex]} فاز باللعبة!`;
+        document.getElementById('win-overlay').style.display = 'flex';
+        return true;
+      }
+
+      // تحقق من الثعبان
+      const snake = SNAKES.find(s => s.head === newPos);
+      if (snake) {
+        setMessage(`🐍 ثعبان! ${newPos} ← ${snake.tail}`, 'snake');
+        await delay(700);
+        positions[playerIndex] = snake.tail;
+        drawTokens();
+        updatePlayersList();
+        await delay(300);
+        return false;
+      }
+
+      // تحقق من السلم
+      const ladder = LADDERS.find(l => l.from === newPos);
+      if (ladder) {
+        setMessage(`🪜 سلم! ${newPos} ↑ ${ladder.to}`, 'ladder');
+        await delay(700);
+        positions[playerIndex] = ladder.to;
+        drawTokens();
+        updatePlayersList();
+        await delay(300);
+        return false;
+      }
+
+      setMessage(`${PLAYER_NAMES[playerIndex]} في مربع ${newPos}`);
+      return false;
+    }
+
+    const delay = ms => new Promise(res => setTimeout(res, ms));
+
+    // ==================== إعادة الضبط ====================
+    function resetGame() {
+      document.getElementById('win-overlay').style.display = 'none';
+      positions = new Array(numPlayers).fill(0);
+      currentPlayer = 0;
+      busy = false;
+      drawTokens();
+      updatePlayersList();
+      setMessage('دور اللاعب 1');
+      document.getElementById('roll-btn').disabled = false;
+    }
+
+    // ==================== بدء اللعبة (يُستدعى عند تحميل الصفحة) ====================
+    function initGame() {
+      boardCanvas = document.getElementById('board-canvas');
+      boardCtx = boardCanvas.getContext('2d');
+      tokenCanvas = document.getElementById('token-canvas');
+      tokenCtx = tokenCanvas.getContext('2d');
+      diceCanvas = document.getElementById('dice-canvas');
+      diceCtx = diceCanvas.getContext('2d');
+
+      // حساب حجم الخلية بناءً على حجم النافذة
+      const minDim = Math.min(window.innerWidth - 300, window.innerHeight - 100, 600);
+      cellSize = Math.floor(minDim / 10);
+      boardCanvas.width = boardCanvas.height = cellSize * 10;
+
+      // تهيئة اللاعبين
+      positions = new Array(numPlayers).fill(0);
+      currentPlayer = 0;
+      renderPlayersList();
+
+      drawBoard();
+      drawTokens();
+      drawDiceFace(1);
+      setMessage('دور اللاعب 1');
+
+      // أحداث الأزرار
+      document.getElementById('roll-btn').addEventListener('click', async () => {
+        if (busy) return;
+        busy = true;
+        const btn = document.getElementById('roll-btn');
+        btn.disabled = true;
+
+        // حركة النرد
+        const diceBox = document.getElementById('dice-box');
+        diceBox.classList.add('rolling');
+        for (let i = 0; i < 8; i++) {
+          drawDiceFace(Math.floor(Math.random() * 6) + 1);
+          await delay(50);
+        }
+        diceBox.classList.remove('rolling');
+        const diceValue = Math.floor(Math.random() * 6) + 1;
+        drawDiceFace(diceValue);
+
+        setMessage(`${PLAYER_EMOJIS[currentPlayer]} رمى ${diceValue}`);
+        await delay(400);
+
+        const won = await movePlayer(currentPlayer, diceValue);
+        if (won) {
+          busy = false;
+          return;
+        }
+
+        // التبديل إلى اللاعب التالي
+        currentPlayer = (currentPlayer + 1) % numPlayers;
+        updatePlayersList();
+        setMessage(`دور ${PLAYER_NAMES[currentPlayer]}`);
+        btn.disabled = false;
+        busy = false;
+      });
+
+      document.getElementById('reset-btn').addEventListener('click', resetGame);
+    }
+
+    window.addEventListener('load', initGame);
+    window.addEventListener('resize', () => {
+      if (!boardCanvas) return;
+      const minDim = Math.min(window.innerWidth - 300, window.innerHeight - 100, 600);
+      cellSize = Math.floor(minDim / 10);
+      boardCanvas.width = boardCanvas.height = cellSize * 10;
+      drawBoard();
+      drawTokens();
+    });
+  </script>
 </body>
 </html>
